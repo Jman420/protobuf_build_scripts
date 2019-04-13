@@ -1,6 +1,6 @@
 # Building Protobuf for Android
 
-The [build_protobuf.ps1](build_protobuf.ps1) script is a PowerShell script which will automatically generate the necessary Android Make files for ndk-build to compile Protobuf for Android.
+The [build_protobuf.ps1](build_protobuf.ps1) script is a PowerShell script which will automatically generate the necessary Android Make files for cmake to compile Protobuf for Android.
 
 ## Steps
   - Download the latest build of Protobuf from [https://github.com/protocolbuffers/protobuf](https://github.com/protocolbuffers/protobuf) (downloading the cpp zip from the Releases section will suffice)
