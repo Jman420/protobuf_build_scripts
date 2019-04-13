@@ -10,7 +10,9 @@ $X86Dir = "$OutputDir/x86"
 $X86_64Dir = "$OutputDir/x86_64"
 
 # Remove output directories
-Remove-Item $OutputDir -Force -Recurse
+if (Test-Path $OutputDir) {
+    Remove-Item $OutputDir -Force -Recurse
+}
 
 # Make output directories
 New-Item -ItemType directory -Force -Path $ArmV7Dir
