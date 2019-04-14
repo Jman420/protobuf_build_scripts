@@ -1,29 +1,39 @@
+$BuildDir = "build"
+$OutputDir = "out"
+$RootSourcePath = "./jni"
+
 $AndroidSdkDir = "Android/Sdk"
-$CmakeExe = "$AndroidSdkDir/cmake/3.6.4111459/bin/cmake.exe"
-$NinjaExe = "$AndroidSdkDir/cmake/3.6.4111459/bin/ninja.exe"
+$AndroidCmakeExe = "$AndroidSdkDir/cmake/3.6.4111459/bin/cmake.exe"
+$AndroidNinjaExe = "$AndroidSdkDir/cmake/3.6.4111459/bin/ninja.exe"
 $NdkBundle = "$AndroidSdkDir/ndk-bundle/"
 $ToolchainFile = "$NdkBundle/build/cmake/android.toolchain.cmake"
 $ArchTargets = @("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
-$BuildDir = "build"
-$OutputDir = "out"
 $LibraryFilePattern = "*.a"
 
-$RootSourcePath = "./jni/src"
+$CppSourcePath = "$RootSourcePath/src"
 $IncludeFilePattern = "*.h"
 $IncludeDir = "./$OutputDir/include"
 $ExcludedFolders = "test|solaris|compiler"
 
-# Remove build & output directories
-if (Test-Path $BuildDir) {
-    Write-Output "Removing existing Build Directory..."
-    Remove-Item $BuildDir -Force -Recurse
-}
-if (Test-Path $OutputDir) {
-    Write-Output "Removing existing Output Directory..."
-    Remove-Item $OutputDir -Force -Recurse
-}
+$JavaSourcePath = "$RootSourcePath/java"
+$CompilerFileName = "protoc.exe"
+$CompilerPath = "$OutputDir/compiler/$CompilerFileName"
+$CompilerDestination = "$CppSourcePath/$CompilerFileName"
+$JarFilePattern = "*.jar"
+$JavaLiteBuildDir = "$JavaSourcePath/lite/target"
+$JavaLiteOutputDir = "$OutputDir/java"
 
 foreach ($archTarget in $ArchTargets) {
+    # Remove build & output directories
+    if (Test-Path $BuildDir/$archTarget) {
+        Write-Output "Removing existing Build Directory for $archTarget..."
+        Remove-Item $BuildDir/$archTarget -Force -Recurse
+    }
+    if (Test-Path $OutputDir/$archTarget) {
+        Write-Output "Removing existing Output Directory for $archTarget..."
+        Remove-Item $OutputDir/$archTarget -Force -Recurse
+    }
+
     # Make Target Output Directory
     Write-Output "Creating Build & Output Directory for $archTarget ..."
     New-Item -ItemType directory -Force -Path $BuildDir/$archTarget
@@ -31,15 +41,14 @@ foreach ($archTarget in $ArchTargets) {
     $fullOutputPath = Resolve-Path $OutputDir/$archTarget
     
     Write-Output "Building Protobuf for Android - $archTarget ..."
-    
     Push-Location $BuildDir/$archTarget
-    . $env:LOCALAPPDATA\$CmakeExe `
+    . $env:LOCALAPPDATA\$AndroidCmakeExe `
         -Dprotobuf_BUILD_TESTS=OFF `
         -Dprotobuf_BUILD_PROTOC_BINARIES=OFF `
         -Dprotobuf_BUILD_SHARED_LIBS=OFF `
         -DANDROID_NDK="$env:LOCALAPPDATA/$NdkBundle" `
         -DCMAKE_TOOLCHAIN_FILE="$env:LOCALAPPDATA/$ToolchainFile" `
-        -DCMAKE_MAKE_PROGRAM="$env:LOCALAPPDATA/$NinjaExe" `
+        -DCMAKE_MAKE_PROGRAM="$env:LOCALAPPDATA/$AndroidNinjaExe" `
         -DCMAKE_CXX_FLAGS=-std=c++14 `
         -DANDROID_STL=c++_shared `
         -DANDROID_ABI="$archTarget" `
@@ -48,7 +57,7 @@ foreach ($archTarget in $ArchTargets) {
         -G "Android Gradle - Ninja" `
         ../../jni/cmake/
     
-    . $env:LOCALAPPDATA\$CmakeExe --build .
+    . $env:LOCALAPPDATA\$AndroidCmakeExe --build .
     Write-Output "Successfully built Protobuf for Android - $archTarget !"
     
     Write-Output "Copying $archTarget binaries to Output Directory..."
@@ -65,7 +74,7 @@ Write-Output "Successfully built Protobuf for Android!"
 
 # Find Source Directories
 Write-Output "Finding Source Directories to copy Include Files..."
-Push-Location $RootSourcePath
+Push-Location $CppSourcePath
 $sourceDirectories = (Get-ChildItem -Path . -Directory -Recurse | Where { $_.FullName -NotMatch $ExcludedFolders }).FullName | Resolve-Path -Relative
 if (!$sourceDirectories) {
     Write-Output "Error : No Source Directories found!"
@@ -84,7 +93,7 @@ $includeFileDest = Resolve-Path $IncludeDir
 # Copy Headers to Include Directory
 Write-Output "Copying Include Files to $includeFileDest ..."
 foreach ($sourceDir in $sourceDirectories) {
-    Push-Location $RootSourcePath/$sourceDir
+    Push-Location $CppSourcePath/$sourceDir
     $includeFiles = (Get-ChildItem -Path $IncludeFilePattern).FullName
     
     foreach ($includeFile in $includeFiles) {
@@ -96,3 +105,25 @@ foreach ($sourceDir in $sourceDirectories) {
     Pop-Location
 }
 Write-Output "Successfully copied Protobuf Include Files to $includeFileDest !"
+
+# Build Java Libraries
+Write-Output "Copying Protobuf Compiler to compile location..."
+New-Item -Force $CompilerDestination
+Copy-Item -Force $CompilerPath -Destination $CompilerDestination
+Write-Output "Successfully copied Protobuf Compiler to compile location!"
+
+Write-Output "Building Java Packages..."
+Push-Location $JavaSourcePath
+. mvn -DskipTests package
+Pop-Location
+Write-Output "Successfully built Java Packages!"
+
+# Copy Java Library
+Write-Output "Copying Protobuf-lite Jar to Output Directory..."
+Push-Location $JavaLiteBuildDir
+$liteJar = (Get-ChildItem -Path $JarFilePattern).Name
+Pop-Location
+Write-Output "Found Protobuf-lite Jar : $liteJar"
+New-Item -Force $JavaLiteOutputDir/$liteJar
+Copy-Item -Force $JavaLiteBuildDir/$liteJar -Destination $JavaLiteOutputDir/$liteJar
+Write-Output "Successfully copied Java Protobuf-lite Jar to Output Directory!"
