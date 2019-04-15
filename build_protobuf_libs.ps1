@@ -11,9 +11,10 @@ $ArchTargets = @("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
 $LibraryFilePattern = "*.a"
 
 $CppSourcePath = "$RootSourcePath/src"
-$IncludeFilePattern = "*.h"
+$IncludeFilePattern = @("*.h", "*.inc")
 $IncludeDir = "./$OutputDir/include"
 $ExcludedFolders = "test|solaris|compiler"
+$ExcludedFiles = "*test*"
 
 $JavaSourcePath = "$RootSourcePath/java"
 $CompilerFileName = "protoc.exe"
@@ -85,6 +86,12 @@ Write-Output "Source Directories Found : "
 Write-Output "$sourceDirectories`n"
 Pop-Location
 
+# Remove Include output directory
+if (Test-Path $IncludeDir) {
+    Write-Output "Removing existing Output Include directory..."
+    Remove-Item $IncludeDir -Force -Recurse
+}
+
 # Make the Include output directory
 Write-Output "Creating output Include directory..."
 New-Item -ItemType directory -Force -Path $IncludeDir
@@ -94,7 +101,7 @@ $includeFileDest = Resolve-Path $IncludeDir
 Write-Output "Copying Include Files to $includeFileDest ..."
 foreach ($sourceDir in $sourceDirectories) {
     Push-Location $CppSourcePath/$sourceDir
-    $includeFiles = (Get-ChildItem -Path $IncludeFilePattern).FullName
+    $includeFiles = (Get-ChildItem -Path $IncludeFilePattern -Exclude $ExcludedFiles).FullName
     
     foreach ($includeFile in $includeFiles) {
         $fileName = Resolve-Path -Relative -Path "$includeFile"
