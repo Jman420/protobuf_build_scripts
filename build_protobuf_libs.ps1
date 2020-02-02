@@ -57,7 +57,7 @@ foreach ($archTarget in $ArchTargets) {
         -DANDROID_ABI="$archTarget" `
         -DANDROID_LINKER_FLAGS="-landroid -llog" `
         -DANDROID_CPP_FEATURES="rtti exceptions" `
-        -G "Android Gradle - Ninja" `
+        -G "Ninja" `
         ../../jni/cmake/
     
     . $env:LOCALAPPDATA\$AndroidCmakeExe --build .
