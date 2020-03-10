@@ -1,6 +1,4 @@
-$BuildDir = "build"
-$OutputDir = "out"
-$RootSourcePath = "./jni"
+. ./variables.ps1
 
 $AndroidSdkDir = "Android/Sdk"
 $CmakeVersion = "3.10.2.4988404"
@@ -11,40 +9,38 @@ $NdkBundle = "$AndroidSdkDir/ndk/$NdkVersion"
 $ToolchainFile = "$NdkBundle/build/cmake/android.toolchain.cmake"
 $ArchTargets = @("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
 $LibraryFilePattern = "*.a"
+$AndroidBuildDir = "$BuildDir/android"
+$AndroidOutputDir = "$OutputDir/android"
 
-$CppSourcePath = "$RootSourcePath/src"
-$IncludeFilePattern = @("*.h", "*.inc")
-$IncludeDir = "./$OutputDir/include"
-$ExcludedFolders = "test|solaris|compiler"
-$ExcludedFiles = "*test*"
-
-$JavaSourcePath = "$RootSourcePath/java"
-$CompilerFileName = "protoc.exe"
-$CompilerPath = "$OutputDir/compiler/$CompilerFileName"
 $CompilerDestination = "$CppSourcePath/$CompilerFileName"
+$JavaSourcePath = "$RootSourcePath/java"
 $JarFilePattern = "*.jar"
 $JavaLiteBuildDir = "$JavaSourcePath/lite/target"
 $JavaLiteOutputDir = "$OutputDir/java"
 
 foreach ($archTarget in $ArchTargets) {
+    $archBuildDir = "$AndroidBuildDir/$archTarget"
+    $archOutputDir = "$AndroidOutputDir/$archTarget"
+
     # Remove build & output directories
-    if (Test-Path $BuildDir/$archTarget) {
-        Write-Output "Removing existing Build Directory for $archTarget..."
-        Remove-Item $BuildDir/$archTarget -Force -Recurse
+    Write-Output "Removing Existing Build & Output Directories for $archTarget ..."
+    if (Test-Path $archBuildDir) {
+        Write-Output "Removing existing Build Directory for $archTarget ..."
+        Remove-Item $archBuildDir -Force -Recurse
     }
-    if (Test-Path $OutputDir/$archTarget) {
-        Write-Output "Removing existing Output Directory for $archTarget..."
-        Remove-Item $OutputDir/$archTarget -Force -Recurse
+    if (Test-Path $archOutputDir) {
+        Write-Output "Removing existing Output Directory for $archTarget ..."
+        Remove-Item $archOutputDir -Force -Recurse
     }
 
     # Make Target Output Directory
     Write-Output "Creating Build & Output Directory for $archTarget ..."
-    New-Item -ItemType directory -Force -Path $BuildDir/$archTarget
-    New-Item -ItemType directory -Force -Path $OutputDir/$archTarget
-    $fullOutputPath = Resolve-Path $OutputDir/$archTarget
+    New-Item -ItemType directory -Force -Path $archBuildDir
+    New-Item -ItemType directory -Force -Path $archOutputDir
+    $fullOutputPath = Resolve-Path $archOutputDir
     
     Write-Output "Building Protobuf for Android - $archTarget ..."
-    Push-Location $BuildDir/$archTarget
+    Push-Location $archBuildDir
     . $env:LOCALAPPDATA\$AndroidCmakeExe `
         -Dprotobuf_BUILD_TESTS=OFF `
         -Dprotobuf_BUILD_PROTOC_BINARIES=OFF `
@@ -58,7 +54,7 @@ foreach ($archTarget in $ArchTargets) {
         -DANDROID_LINKER_FLAGS="-landroid -llog" `
         -DANDROID_CPP_FEATURES="rtti exceptions" `
         -G "Ninja" `
-        ../../jni/cmake/
+        "../../../$RootSourcePath/cmake"
     
     . $env:LOCALAPPDATA\$AndroidCmakeExe --build .
     Write-Output "Successfully built Protobuf for Android - $archTarget !"
@@ -75,45 +71,7 @@ foreach ($archTarget in $ArchTargets) {
 }
 Write-Output "Successfully built Protobuf for Android!"
 
-# Find Source Directories
-Write-Output "Finding Source Directories to copy Include Files..."
-Push-Location $CppSourcePath
-$sourceDirectories = (Get-ChildItem -Path . -Directory -Recurse | Where { $_.FullName -NotMatch $ExcludedFolders }).FullName | Resolve-Path -Relative
-if (!$sourceDirectories) {
-    Write-Output "Error : No Source Directories found!"
-    Pop-Location
-    exit 1
-}
-Write-Output "Source Directories Found : "
-Write-Output "$sourceDirectories`n"
-Pop-Location
-
-# Remove Include output directory
-if (Test-Path $IncludeDir) {
-    Write-Output "Removing existing Output Include directory..."
-    Remove-Item $IncludeDir -Force -Recurse
-}
-
-# Make the Include output directory
-Write-Output "Creating output Include directory..."
-New-Item -ItemType directory -Force -Path $IncludeDir
-$includeFileDest = Resolve-Path $IncludeDir
-
-# Copy Headers to Include Directory
-Write-Output "Copying Include Files to $includeFileDest ..."
-foreach ($sourceDir in $sourceDirectories) {
-    Push-Location $CppSourcePath/$sourceDir
-    $includeFiles = (Get-ChildItem -Path $IncludeFilePattern -Exclude $ExcludedFiles).FullName
-    
-    foreach ($includeFile in $includeFiles) {
-        $fileName = Resolve-Path -Relative -Path "$includeFile"
-        $fileDestination = "$includeFileDest/$sourceDir/$fileName"
-        New-Item -Force $fileDestination
-        Copy-Item -Force $includeFile -Destination $fileDestination
-    }
-    Pop-Location
-}
-Write-Output "Successfully copied Protobuf Include Files to $includeFileDest !"
+& "$PSScriptRoot\copy_include_headers.ps1"
 
 # Build Java Libraries
 Write-Output "Copying Protobuf Compiler to compile location..."

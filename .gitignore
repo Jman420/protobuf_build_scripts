@@ -68,5 +68,5 @@ fastlane/readme.md
 obj/*
 libs/*
 out/*
-jni/*
+src/*
 protobuf-master.zip
