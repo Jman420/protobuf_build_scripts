@@ -1,4 +1,5 @@
-$RootSourcePath = "./jni"
+. ./variables.ps1
+
 $RepoUrl = "https://github.com/protocolbuffers/protobuf/archive/master.zip"
 $RepoZipFile = "./protobuf-master.zip"
 $RootZipFolder = "protobuf-master"
