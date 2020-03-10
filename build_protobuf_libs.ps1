@@ -3,8 +3,9 @@ $OutputDir = "out"
 $RootSourcePath = "./jni"
 
 $AndroidSdkDir = "Android/Sdk"
-$AndroidCmakeExe = "$AndroidSdkDir/cmake/3.6.4111459/bin/cmake.exe"
-$AndroidNinjaExe = "$AndroidSdkDir/cmake/3.6.4111459/bin/ninja.exe"
+$CmakeVersion = "3.10.2.4988404"
+$AndroidCmakeExe = "$AndroidSdkDir/cmake/$CmakeVersion/bin/cmake.exe"
+$AndroidNinjaExe = "$AndroidSdkDir/cmake/$CmakeVersion/bin/ninja.exe"
 $NdkVersion = "21.0.6113669"
 $NdkBundle = "$AndroidSdkDir/ndk/$NdkVersion"
 $ToolchainFile = "$NdkBundle/build/cmake/android.toolchain.cmake"
@@ -56,7 +57,7 @@ foreach ($archTarget in $ArchTargets) {
         -DANDROID_ABI="$archTarget" `
         -DANDROID_LINKER_FLAGS="-landroid -llog" `
         -DANDROID_CPP_FEATURES="rtti exceptions" `
-        -G "Android Gradle - Ninja" `
+        -G "Ninja" `
         ../../jni/cmake/
     
     . $env:LOCALAPPDATA\$AndroidCmakeExe --build .
