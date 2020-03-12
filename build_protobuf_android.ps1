@@ -45,6 +45,7 @@ foreach ($archTarget in $ArchTargets) {
         -Dprotobuf_BUILD_TESTS=OFF `
         -Dprotobuf_BUILD_PROTOC_BINARIES=OFF `
         -Dprotobuf_BUILD_SHARED_LIBS=OFF `
+        -DCMAKE_BUILD_TYPE=Release `
         -DANDROID_NDK="$env:LOCALAPPDATA/$NdkBundle" `
         -DCMAKE_TOOLCHAIN_FILE="$env:LOCALAPPDATA/$ToolchainFile" `
         -DCMAKE_MAKE_PROGRAM="$env:LOCALAPPDATA/$AndroidNinjaExe" `
