@@ -9,8 +9,8 @@ SET HostOutputDir=%OutputDir%\host
 SET CompilerOutputDir=%OutputDir%\compiler
 
 SET CompilerFileName=protoc.exe
-SET ProtobufLibName=libprotobufd.lib
-SET ProtobufLiteLibName=libprotobuf-lited.lib
+SET ProtobufLibName=libprotobuf.lib
+SET ProtobufLiteLibName=libprotobuf-lite.lib
 
 ECHO Removing Existing Build ^& Output Directories...
 IF EXIST "%HostBuildDir%" (
@@ -37,6 +37,7 @@ cmake ^
     -Dprotobuf_BUILD_TESTS=OFF ^
     -Dprotobuf_BUILD_PROTOC_BINARIES=ON ^
     -Dprotobuf_BUILD_SHARED_LIBS=OFF ^
+    -DCMAKE_BUILD_TYPE=Release ^
     -G "Ninja" ^
     ..\..\src\cmake\
 
