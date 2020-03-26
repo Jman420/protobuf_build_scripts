@@ -3,7 +3,7 @@
 SET BuildType=%1
 IF "%BuildType%"=="" (
     SET BuildType=Debug
-    ECHO Build Type not specified.  Using %BuildType% configuration.
+    ECHO Build Type not specified.  Using Debug configuration.
 )
 
 SET BuildDir=build
