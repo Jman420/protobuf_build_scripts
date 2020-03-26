@@ -1,16 +1,26 @@
 @ECHO OFF
 
+SET BuildType=%1
+IF "%BuildType%"=="" (
+    SET BuildType=Debug
+    ECHO Build Type not specified.  Using %BuildType% configuration.
+)
+
 SET BuildDir=build
 SET OutputDir=out
 SET RootSourcePath=./src
 
-SET HostBuildDir=%BuildDir%\host
-SET HostOutputDir=%OutputDir%\host
+SET HostBuildDir=%BuildDir%\host\%BuildType%
+SET HostOutputDir=%OutputDir%\host\%BuildType%
 SET CompilerOutputDir=%OutputDir%\compiler
 
 SET CompilerFileName=protoc.exe
 SET ProtobufLibName=libprotobuf.lib
 SET ProtobufLiteLibName=libprotobuf-lite.lib
+IF "%BuildType%"=="Debug" (
+    SET ProtobufLibName=libprotobufd.lib
+    SET ProtobufLiteLibName=libprotobuf-lited.lib
+)
 
 ECHO Removing Existing Build ^& Output Directories...
 IF EXIST "%HostBuildDir%" (
@@ -37,9 +47,9 @@ cmake ^
     -Dprotobuf_BUILD_TESTS=OFF ^
     -Dprotobuf_BUILD_PROTOC_BINARIES=ON ^
     -Dprotobuf_BUILD_SHARED_LIBS=OFF ^
-    -DCMAKE_BUILD_TYPE=Release ^
+    -DCMAKE_BUILD_TYPE=%BuildType% ^
     -G "Ninja" ^
-    ..\..\src\cmake\
+    ..\..\..\src\cmake\
 
 ninja
 POPD
