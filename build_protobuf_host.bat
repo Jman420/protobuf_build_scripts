@@ -47,6 +47,7 @@ cmake ^
     -Dprotobuf_BUILD_TESTS=OFF ^
     -Dprotobuf_BUILD_PROTOC_BINARIES=ON ^
     -Dprotobuf_BUILD_SHARED_LIBS=OFF ^
+    -Dprotobuf_MSVC_STATIC_RUNTIME=OFF ^
     -DCMAKE_BUILD_TYPE=%BuildType% ^
     -G "Ninja" ^
     ..\..\..\src\cmake\
