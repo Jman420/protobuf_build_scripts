@@ -49,18 +49,14 @@ cmake ^
     -Dprotobuf_BUILD_SHARED_LIBS=OFF ^
     -Dprotobuf_MSVC_STATIC_RUNTIME=OFF ^
     -DCMAKE_BUILD_TYPE=%BuildType% ^
+    -DCMAKE_INSTALL_PREFIX=..\..\..\%HostOutputDir% ^
     -G "Ninja" ^
     ..\..\..\src\cmake\
 
-ninja
+cmake --build . --target install
 POPD
-ECHO Successfully built Protobuf for Host Architecture!
 
 ECHO Copying Compiler to Output Directories...
 copy "%HostBuildDir%\%CompilerFileName%" "%CompilerOutputDir%\%CompilerFileName%"
 
-ECHO Copying Host Libraries to Output Directories...
-copy "%HostBuildDir%\%ProtobufLibName%" "%HostOutputDir%\%ProtobufLibName%"
-copy "%HostBuildDir%\%ProtobufLiteLibName%" "%HostOutputDir%\%ProtobufLiteLibName%"
-ECHO Succesfully Copied Host Compiler ^& Libraries to Output Directories!
-ECHO Execute copy_include_headers.ps1 in Powershell to copy the Protobuf Include Headers.
+ECHO Successfully built Protobuf for Host Architecture!
