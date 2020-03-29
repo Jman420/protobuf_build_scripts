@@ -54,25 +54,15 @@ foreach ($archTarget in $ArchTargets) {
         -DANDROID_ABI="$archTarget" `
         -DANDROID_LINKER_FLAGS="-landroid -llog" `
         -DANDROID_CPP_FEATURES="rtti exceptions" `
+        -DCMAKE_INSTALL_PREFIX="$fullOutputPath" `
         -G "Ninja" `
         "../../../$RootSourcePath/cmake"
     
-    . $env:LOCALAPPDATA\$AndroidCmakeExe --build .
+    . $env:LOCALAPPDATA\$AndroidCmakeExe --build . --target install
     Write-Output "Successfully built Protobuf for Android - $archTarget !"
-    
-    Write-Output "Copying $archTarget binaries to Output Directory..."
-    $libraryFiles = (Get-ChildItem -Path $LibraryFilePattern -Recurse).FullName | Resolve-Path -Relative
-    foreach ($libFile in $libraryFiles) {
-        $libFileDest = "$fullOutputPath/" + $libFile.Replace(".\", "").Replace("\", "/")
-        Write-Output "Copying $libFile to $libFileDest ..."
-        New-Item -Force $libFileDest
-        Copy-Item -Force $libFile -Destination $libFileDest
-    }
     Pop-Location
 }
 Write-Output "Successfully built Protobuf for Android!"
-
-& "$PSScriptRoot\copy_include_headers.ps1"
 
 # Build Java Libraries
 Write-Output "Copying Protobuf Compiler to compile location..."
